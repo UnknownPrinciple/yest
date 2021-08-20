@@ -13,9 +13,12 @@ export async function main(root) {
 async function run(file, root) {
   console.log('running', file, 'from', root);
   let results = [];
+  // QUESTION can I use existing context but extended with "environment"?
   let context = createContext({
     console,
+    // TODO add it() and describe()
     test: async (name, fn) => {
+      // TODO skippers
       try {
         await fn();
         results.push({ name, type: 'success' });
@@ -23,8 +26,12 @@ async function run(file, root) {
         results.push({ name, type: 'failure', error });
       }
     },
+    // TODO should return an actual mock of something or the mock itself
+    // mock(alreadyMock) -> alreadyMock
+    // mock(fn) -> mockFn
     mock: (target) => {
       return {
+        // TODO more API
         returnValue(v) {
           target.returnValue = v;
         },
@@ -32,8 +39,11 @@ async function run(file, root) {
     },
     expect: (actual) => {
       return {
+        // TODO more matchers
         toBe(expected) {
           if (actual !== expected) {
+            // QUESTION can I build this on top of node assert?
+            // TODO should be custom error class to be able to pass more data
             throw new Error(`Expected ${expected} but received ${actual}`);
           }
         },
@@ -44,10 +54,12 @@ async function run(file, root) {
   let code = await readFile(targetUrl, 'utf-8');
   let mocks = await parseMocks(code, targetUrl);
   let mocksMap = new Map();
+  // nodeMap
+  // modulesMap
   let mod = new SourceTextModule(code, { identifier: targetUrl.toString(), context });
 
   await mod.link(async (specifier, referencingModule) => {
-    let resolvedPath = await import.meta.resolve(specifier, targetUrl);
+    let resolvedPath = await import.meta.resolve(specifier, new URL(referencingModule.identifier));
 
     if (mocks.includes(resolvedPath)) {
       if (mocksMap.has(resolvedPath)) {
@@ -59,19 +71,20 @@ async function run(file, root) {
     }
 
     if (resolvedPath.startsWith('node:')) {
+      // TODO memoize
+      // TODO try synthetic
       throw new Error('implement me');
     }
 
+    // TODO http modules
+
+    // TODO memoize
     let code = await readFile(new URL(resolvedPath), 'utf-8');
-    return new SourceTextModule(code, {
-      context,
-      identifier: resolvedPath,
-    });
+    return new SourceTextModule(code, { identifier: resolvedPath, context });
   });
 
   try {
     await mod.evaluate();
-    console.log('done');
     console.log(results);
   } catch (error) {
     console.log(error);
@@ -95,7 +108,7 @@ async function createMockModule(resolvedPath, context) {
   } catch (error) {
     let original = await import(resolvedPath);
     let keys = Object.keys(original);
-    return new SyntheticModule(
+    let mock = new SyntheticModule(
       keys,
       () => {
         for (let key of keys) {
@@ -109,6 +122,7 @@ async function createMockModule(resolvedPath, context) {
       },
       { identifier: resolvedPath, context },
     );
+    return mock;
   }
 }
 
