@@ -43,17 +43,19 @@ async function run(file, root) {
   let targetUrl = new URL(fileUrl(file, root));
   let code = await readFile(targetUrl, 'utf-8');
   let mocks = await parseMocks(code, targetUrl);
-  let mocksMods = await Promise.all(
-    mocks.map(async (resolvedPath) => createMockModule(resolvedPath, context)),
-  );
+  let mocksMap = new Map();
   let mod = new SourceTextModule(code, { identifier: targetUrl.toString(), context });
 
   await mod.link(async (specifier, referencingModule) => {
     let resolvedPath = await import.meta.resolve(specifier, targetUrl);
 
     if (mocks.includes(resolvedPath)) {
-      let index = mocks.indexOf(resolvedPath);
-      return mocksMods[index];
+      if (mocksMap.has(resolvedPath)) {
+        return mocksMap.get(resolvedPath);
+      }
+      let mod = createMockModule(resolvedPath, context);
+      mocksMap.set(resolvedPath, mod);
+      return mod;
     }
 
     if (resolvedPath.startsWith('node:')) {
@@ -105,11 +107,6 @@ async function createMockModule(resolvedPath, context) {
       identifier: resolvedPath,
     },
   );
-
-  await mock.link(() => {
-    throw new Error('this should never happen');
-  });
-  await mock.evaluate();
   return mock;
 }
 
