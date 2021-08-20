@@ -1,14 +1,13 @@
 import { SourceTextModule, SyntheticModule, createContext } from 'vm';
 import { readFile } from 'fs/promises';
 import { resolve } from 'path';
-import glob from 'glob';
+import glob from 'tiny-glob';
 
-export function main(root) {
-  glob('**/*.test.js', { cwd: root }, (err, files) => {
-    for (let file of files) {
-      run(file, root);
-    }
-  });
+export async function main(root) {
+  let files = await glob('**/*.test.js', { cwd: root });
+  for (let file of files) {
+    run(file, root);
+  }
 }
 
 async function run(file, root) {
