@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "yest"
+  }
+}
