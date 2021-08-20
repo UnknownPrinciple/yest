@@ -2,6 +2,7 @@
 /** @mock ./mods/modC.js */
 import { transform, proxy } from './modA.js';
 import { sum } from './modB.js';
+import { readFile } from 'fs/promises';
 
 test('transform fn', () => {
   // TODO should immediately throw if mock is used without configuration
