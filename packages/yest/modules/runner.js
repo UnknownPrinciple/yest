@@ -1,6 +1,6 @@
 import { SourceTextModule, SyntheticModule, createContext } from 'vm';
 import { readFile } from 'fs/promises';
-import { resolve } from 'path';
+import { resolve, dirname, basename } from 'path';
 import glob from 'tiny-glob';
 
 export async function main(root) {
@@ -87,27 +87,29 @@ function parseMocks(code, parentUrl) {
 }
 
 async function createMockModule(resolvedPath, context) {
-  let original = await import(resolvedPath);
-  let keys = Object.keys(original);
-  let mockFns = keys.map((key) => {
-    let fn = function () {
-      return fn.returnValue;
-    };
-    return fn;
-  });
-  let mock = new SyntheticModule(
-    keys,
-    () => {
-      keys.forEach((key, index) => {
-        mock.setExport(key, mockFns[index]);
-      });
-    },
-    {
-      context,
-      identifier: resolvedPath,
-    },
-  );
-  return mock;
+  try {
+    let filepath = new URL(resolvedPath).pathname;
+    let assumedMockFilePath = resolve(dirname(filepath), '__mocks__', basename(filepath));
+    let code = await readFile(assumedMockFilePath, 'utf-8');
+    return new SourceTextModule(code, { identifier: resolvedPath, context });
+  } catch (error) {
+    let original = await import(resolvedPath);
+    let keys = Object.keys(original);
+    return new SyntheticModule(
+      keys,
+      () => {
+        for (let key of keys) {
+          // TODO call tracking
+          // TODO should just use mock constructor
+          let fn = function () {
+            return fn.returnValue;
+          };
+          mock.setExport(key, fn);
+        }
+      },
+      { identifier: resolvedPath, context },
+    );
+  }
 }
 
 function fileUrl(filePath, root) {
