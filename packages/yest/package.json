@@ -6,6 +6,7 @@
     "yest": "./modules/cli.js"
   },
   "dependencies": {
+    "file-url": "^4.0.0",
     "tiny-glob": "^0.2.9"
   }
 }

@@ -2,10 +2,9 @@ import { SourceTextModule, SyntheticModule, createContext } from 'vm';
 import { readFile } from 'fs/promises';
 import { resolve, dirname, basename } from 'path';
 import glob from 'tiny-glob';
-import fileUrl from './fileUrl.js';
+import fileUrl from 'file-url';
 import { mock } from './mock.js';
 import { createTest } from './suite.js';
-import { expect } from './expect.js';
 
 export async function main(root) {
   let files = await glob('**/*.test.js', { cwd: root });
@@ -19,8 +18,8 @@ async function run(file, root) {
   let results = [];
   let test = createTest(results);
   // QUESTION can I use existing context but extended with "environment"?
-  let context = createContext({ ...global, console, test, mock, expect });
-  let identifier = fileUrl(file, root);
+  let context = createContext({ ...global, console, test, mock });
+  let identifier = fileUrl(file, { resolve: true });
   let code = await readFile(new URL(identifier), 'utf-8');
   let mocks = await parseMocks(code, identifier);
   let cache = new Map();
@@ -70,9 +69,9 @@ async function createMockModule(identifier, context) {
   }
   try {
     let filepath = new URL(identifier).pathname;
-    let assumedMockFilePath = resolve(dirname(filepath), '__mocks__', basename(filepath));
-    let code = await readFile(assumedMockFilePath, 'utf-8');
-    return new SourceTextModule(code, { identifier, context });
+    let mockFilepath = resolve(dirname(filepath), '__mocks__', basename(filepath));
+    let code = await readFile(mockFilepath, 'utf-8');
+    return new SourceTextModule(code, { identifier: fileUrl(mockFilepath), context });
   } catch (error) {
     let original = await import(identifier);
     let keys = Object.keys(original);
