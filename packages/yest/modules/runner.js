@@ -15,7 +15,12 @@ export async function main(root) {
 }
 
 async function run(file) {
-  let suiteAPI = createTest((results) => console.log(results));
+  let suiteAPI = createTest((error, results) => {
+    if (error != null) {
+      console.error(error);
+    }
+    console.log(results);
+  });
   let context = createContext({ ...global, console, ...suiteAPI, mock });
   let identifier = fileUrl(file, { resolve: true });
   let code = await readFile(new URL(identifier), 'utf-8');

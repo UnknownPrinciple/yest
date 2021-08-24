@@ -5,6 +5,10 @@ import { sum } from './modB.js';
 import { readFile } from 'fs/promises';
 import assert from 'assert';
 
+before(() => {
+  console.log('before');
+});
+
 test('transform fn', () => {
   mock(sum).returnValue(10);
   assert.equal(transform('0'), 10);
