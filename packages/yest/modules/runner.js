@@ -1,6 +1,7 @@
 import { SourceTextModule, SyntheticModule, createContext } from 'vm';
 import { readFile } from 'fs/promises';
 import { resolve, dirname, basename } from 'path';
+import chalk from 'chalk';
 import glob from 'tiny-glob';
 import fileUrl from 'file-url';
 import { mock } from './mock.js';
@@ -19,7 +20,22 @@ async function run(file) {
     if (error != null) {
       console.error(error);
     }
-    console.log(results);
+    for (let result of results) {
+      switch (result.type) {
+        case 'success':
+          console.log(
+            '  ',
+            chalk.green('✓'),
+            chalk.green(result.name),
+            result.duration > 1 ? chalk.grey(`(${result.duration | 0}ms)`) : '',
+          );
+          break;
+        case 'failure':
+          console.log('  ', chalk.red('✗'), chalk.red(result.name));
+          console.error(result.error);
+          break;
+      }
+    }
   });
   let context = createContext({ ...global, console, ...suiteAPI, mock });
   let identifier = fileUrl(file, { resolve: true });

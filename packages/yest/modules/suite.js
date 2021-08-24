@@ -30,9 +30,11 @@ export function createTest(cb) {
       try {
         memory = new Map();
         for await (let fn of beforeEachQueue) await fn();
+        let start = performance.now();
         await fn();
+        let duration = performance.now() - start;
         for await (let fn of afterEachQueue) await fn();
-        results.push({ name, type: 'success' });
+        results.push({ name, type: 'success', duration });
       } catch (error) {
         results.push({ name, type: 'failure', error });
       }

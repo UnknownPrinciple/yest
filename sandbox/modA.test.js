@@ -14,7 +14,8 @@ test('transform fn', () => {
   assert.equal(transform('0'), 10);
 });
 
-test('mock refresh', () => {
+test('mock refresh', async () => {
+  await new Promise((r) => setTimeout(r, 10));
   assert.throws(() => sum(1, 2), /mock is not configured/);
 });
 
