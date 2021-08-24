@@ -6,9 +6,12 @@ import { readFile } from 'fs/promises';
 import assert from 'assert';
 
 test('transform fn', () => {
-  // TODO should immediately throw if mock is used without configuration
   mock(sum).returnValue(10);
   assert.equal(transform('0'), 10);
+});
+
+test('mock refresh', () => {
+  assert.throws(() => sum(1, 2), /mock is not configured/);
 });
 
 test('transform fn 2', () => {

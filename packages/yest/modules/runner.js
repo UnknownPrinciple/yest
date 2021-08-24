@@ -9,16 +9,14 @@ import { createTest } from './suite.js';
 export async function main(root) {
   let files = await glob('**/*.test.js', { cwd: root });
   for (let file of files) {
-    run(file, root);
+    console.log('running', file, 'from', root);
+    run(file);
   }
 }
 
-async function run(file, root) {
-  console.log('running', file, 'from', root);
-  let results = [];
-  let test = createTest(results);
-  // QUESTION can I use existing context but extended with "environment"?
-  let context = createContext({ ...global, console, test, mock });
+async function run(file) {
+  let suiteAPI = createTest((results) => console.log(results));
+  let context = createContext({ ...global, console, ...suiteAPI, mock });
   let identifier = fileUrl(file, { resolve: true });
   let code = await readFile(new URL(identifier), 'utf-8');
   let mocks = await parseMocks(code, identifier);
@@ -49,7 +47,6 @@ async function run(file, root) {
 
   try {
     await suite.evaluate();
-    console.log(results);
   } catch (error) {
     console.log(error);
   }
