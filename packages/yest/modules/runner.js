@@ -1,11 +1,11 @@
 import { SourceTextModule, SyntheticModule, createContext } from 'vm';
 import { readFile } from 'fs/promises';
 import { resolve, dirname, basename } from 'path';
-import chalk from 'chalk';
 import glob from 'tiny-glob';
 import fileUrl from 'file-url';
 import { mock } from './mock.js';
 import { createTest } from './suite.js';
+import { report } from './reporter.js';
 
 export async function main(root) {
   let files = await glob('**/*.test.js', { cwd: root });
@@ -19,22 +19,8 @@ async function run(file) {
   let suiteAPI = createTest((error, results) => {
     if (error != null) {
       console.error(error);
-    }
-    for (let result of results) {
-      switch (result.type) {
-        case 'success':
-          console.log(
-            '  ',
-            chalk.green('✓'),
-            chalk.green(result.name),
-            result.duration > 1 ? chalk.grey(`(${result.duration | 0}ms)`) : '',
-          );
-          break;
-        case 'failure':
-          console.log('  ', chalk.red('✗'), chalk.red(result.name));
-          console.error(result.error);
-          break;
-      }
+    } else {
+      report(file, results);
     }
   });
   let context = createContext({ ...global, console, ...suiteAPI, mock });
