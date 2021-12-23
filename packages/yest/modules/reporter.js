@@ -1,19 +1,19 @@
-import chalk from 'chalk';
+import colors from 'picocolors';
 
 export function report(file, results) {
-  console.log(chalk.magenta(file));
+  console.log(colors.magenta(file));
   for (let result of results) {
     switch (result.type) {
       case 'success':
         console.log(
           ' ',
-          chalk.green('✓'),
-          chalk.green(result.name),
-          result.duration > 1 ? chalk.grey(`(${result.duration | 0}ms)`) : '',
+          colors.green('✓'),
+          colors.green(result.name),
+          result.duration > 1 ? colors.gray(`(${result.duration | 0}ms)`) : '',
         );
         break;
       case 'failure':
-        console.log(' ', chalk.red('✗'), chalk.red(result.name));
+        console.log(' ', colors.red('✗'), colors.red(result.name));
         console.error(result.error);
         break;
     }
